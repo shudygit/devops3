@@ -6,12 +6,18 @@ services:
     container_name: backend
     ports:
       - "5000:4000"
+    depends_on:
+      - logstash
+    env_file:
+      - .env
 
   frontend:
     build: ./frontend
     container_name: frontend
     ports:
       - "80:80"
+    depends_on:
+      - backend
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
@@ -27,6 +33,9 @@ services:
     container_name: kibana
     ports:
       - "5601:5601"
+    depends_on:
+      - elasticsearch
+
   logstash:
     image: docker.elastic.co/logstash/logstash:7.17.0
     container_name: logstash
@@ -34,11 +43,16 @@ services:
       - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     ports:
       - "5044:5044"
+    depends_on:
+      - elasticsearch
 
   filebeat:
     image: docker.elastic.co/beats/filebeat:7.17.0
     container_name: filebeat
     user: root
+    depends_on:
+      - logstash
     volumes:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml

@@ -1,20 +1,15 @@
-FROM node:18-alpine as build
-
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
-
+# Build React app
+FROM node:18 AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm install
-
 COPY . .
+RUN npm install
 RUN npm run build
 
-# Nginx stage
+# Serve with nginx
 FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy nginx configuration
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built assets from builder
-COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
